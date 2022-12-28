@@ -165,7 +165,7 @@ namespace Contact_Manager_Pro.Areas.Identity.Pages.Account
         {
             try
             {
-                AppUser user = Activator.CreateInstance<AppUser>();
+                var user = Activator.CreateInstance<AppUser>();
                 user.FirstName = Input.FirstName;
                 user.LastName = Input.LastName;
                 return user;
