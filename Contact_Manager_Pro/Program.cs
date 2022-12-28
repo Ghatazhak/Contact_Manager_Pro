@@ -5,9 +5,20 @@ using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+// var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
+// This var gets our connection string from a managed secret instead of using appsettings.json. This keeps from pushing our secrets to github.
+var connectionString = builder.Configuration.GetSection("pgSettings")["pgConnection"];
+
+// Original db context for  microsoft sql server.
+//builder.Services.AddDbContext<ApplicationDbContext>(options =>
+//    options.UseSqlServer(connectionString));
+
+// Get driver from package manager for postgresql. [Npgsql.EntityFrameworkCore.PostgreSQL]
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(connectionString));
+    options.UseNpgsql(connectionString));
+
+
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
