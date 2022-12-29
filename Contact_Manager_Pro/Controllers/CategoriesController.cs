@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Contact_Manager_Pro.Data;
 using Contact_Manager_Pro.Models;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Contact_Manager_Pro.Controllers
 {
@@ -20,6 +22,7 @@ namespace Contact_Manager_Pro.Controllers
         }
 
         // GET: Categories
+        [Authorize]
         public async Task<IActionResult> Index()
         {
             var applicationDbContext = _context.Categories.Include(c => c.AppUser);
@@ -27,6 +30,7 @@ namespace Contact_Manager_Pro.Controllers
         }
 
         // GET: Categories/Details/5
+        [Authorize]
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null || _context.Categories == null)
@@ -46,6 +50,7 @@ namespace Contact_Manager_Pro.Controllers
         }
 
         // GET: Categories/Create
+        [Authorize]
         public IActionResult Create()
         {
             ViewData["AppUserId"] = new SelectList(_context.Users, "Id", "Id");
@@ -70,6 +75,7 @@ namespace Contact_Manager_Pro.Controllers
         }
 
         // GET: Categories/Edit/5
+        [Authorize]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null || _context.Categories == null)
@@ -123,6 +129,7 @@ namespace Contact_Manager_Pro.Controllers
         }
 
         // GET: Categories/Delete/5
+        [Authorize]
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null || _context.Categories == null)
@@ -155,14 +162,14 @@ namespace Contact_Manager_Pro.Controllers
             {
                 _context.Categories.Remove(category);
             }
-            
+
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
         private bool CategoryExists(int id)
         {
-          return _context.Categories.Any(e => e.Id == id);
+            return _context.Categories.Any(e => e.Id == id);
         }
     }
 }

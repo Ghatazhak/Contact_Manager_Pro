@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Contact_Manager_Pro.Data;
 using Contact_Manager_Pro.Models;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Contact_Manager_Pro.Controllers
 {
@@ -20,6 +22,7 @@ namespace Contact_Manager_Pro.Controllers
         }
 
         // GET: Contacts
+        [Authorize]
         public async Task<IActionResult> Index()
         {
             var applicationDbContext = _context.Contacts.Include(c => c.AppUser);
@@ -27,6 +30,7 @@ namespace Contact_Manager_Pro.Controllers
         }
 
         // GET: Contacts/Details/5
+        [Authorize]
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null || _context.Contacts == null)
@@ -46,6 +50,7 @@ namespace Contact_Manager_Pro.Controllers
         }
 
         // GET: Contacts/Create
+        [Authorize]
         public IActionResult Create()
         {
             ViewData["AppUserID"] = new SelectList(_context.Users, "Id", "Id");
@@ -70,6 +75,7 @@ namespace Contact_Manager_Pro.Controllers
         }
 
         // GET: Contacts/Edit/5
+        [Authorize]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null || _context.Contacts == null)
@@ -123,6 +129,7 @@ namespace Contact_Manager_Pro.Controllers
         }
 
         // GET: Contacts/Delete/5
+        [Authorize]
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null || _context.Contacts == null)
@@ -144,6 +151,7 @@ namespace Contact_Manager_Pro.Controllers
         // POST: Contacts/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
+        [Authorize]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             if (_context.Contacts == null)
@@ -155,14 +163,14 @@ namespace Contact_Manager_Pro.Controllers
             {
                 _context.Contacts.Remove(contact);
             }
-            
+
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
         private bool ContactExists(int id)
         {
-          return _context.Contacts.Any(e => e.Id == id);
+            return _context.Contacts.Any(e => e.Id == id);
         }
     }
 }
