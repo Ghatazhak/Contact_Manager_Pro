@@ -10,6 +10,7 @@ using Contact_Manager_Pro.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Contact_Manager_Pro.Enums;
+using Contact_Manager_Pro.Services.Interfaces;
 
 namespace Contact_Manager_Pro.Controllers
 {
@@ -18,11 +19,13 @@ namespace Contact_Manager_Pro.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<AppUser> _userManager;
+        private readonly IImageService _imageService;
 
-        public ContactsController(ApplicationDbContext context, UserManager<AppUser> userManager)
+        public ContactsController(ApplicationDbContext context, UserManager<AppUser> userManager, IImageService imageService)
         {
             _context = context;
             _userManager = userManager;
+            _imageService = imageService;
         }
 
         // GET: Contacts
@@ -71,6 +74,8 @@ namespace Contact_Manager_Pro.Controllers
 
             if (ModelState.IsValid)
             {
+
+                // Get current logged in user id.
                 contact.AppUserID = _userManager.GetUserId(User);
 
                 // This may be the work around for Postgres
@@ -81,6 +86,15 @@ namespace Contact_Manager_Pro.Controllers
                     // Casting a standard DateTime into a utc datetime. Again Postgres fix.
                     contact.BirthDate = DateTime.SpecifyKind(contact.BirthDate.Value, DateTimeKind.Utc);
                 }
+                if (contact.ImageFile != null)
+                {
+                    // set the incoming IFormFile to convert to ImageData and save to contact
+                    contact.ImageData = await _imageService.ConvertFileToByteArrayAsync(contact.ImageFile);
+                    // get the incoming IFormFile contenttype and saving it in the image type.
+                    contact.ImageType = contact.ImageFile.ContentType;
+                }
+
+
                 _context.Add(contact);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));

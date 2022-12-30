@@ -1,10 +1,10 @@
 using Contact_Manager_Pro.Data;
 using Contact_Manager_Pro.Models;
+using Contact_Manager_Pro.Services;
+using Contact_Manager_Pro.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
-
-
 
 // Add services to the container.
 // var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
@@ -26,6 +26,10 @@ builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 builder.Services.AddDefaultIdentity<AppUser>(options => options.SignIn.RequireConfirmedAccount = true)
     .AddEntityFrameworkStores<ApplicationDbContext>();
 builder.Services.AddControllersWithViews();
+
+
+// Custom Services
+builder.Services.AddScoped<IImageService, ImageService>();
 
 var app = builder.Build();
 
