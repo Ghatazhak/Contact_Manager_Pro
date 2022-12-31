@@ -71,7 +71,7 @@ namespace Contact_Manager_Pro.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,FirstName,LastName,BirthDate,Address,Address2,City,State,ZipCode,Email,PhoneNumber,ImageFile")] Contact contact)
+        public async Task<IActionResult> Create([Bind("Id,FirstName,LastName,BirthDate,Address,Address2,City,State,ZipCode,Email,PhoneNumber,ImageFile,")] Contact contact, List<int> CategoryList)
         {
             // Remove AppUserId from the model state check. This will be useful.
             ModelState.Remove("AppUserId");
@@ -98,9 +98,16 @@ namespace Contact_Manager_Pro.Controllers
                     contact.ImageType = contact.ImageFile.ContentType;
                 }
 
-
                 _context.Add(contact);
                 await _context.SaveChangesAsync();
+
+                // Loop over all the selected categories.
+                foreach (int categoryId in CategoryList)
+                {
+                    //Save each category selected to the contactcategories table.
+                    await _addressBookService.AddContactToCategoryAsync(categoryId, contact.Id);
+                }
+
                 return RedirectToAction(nameof(Index));
             }
 
