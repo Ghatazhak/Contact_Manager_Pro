@@ -73,6 +73,40 @@ namespace Contact_Manager_Pro.Controllers
             return View(contacts);
         }
 
+        [Authorize]
+        public IActionResult SearchContacts(string searchString)
+        {
+            string appUserId = _userManager.GetUserId(User);
+            var contacts = new List<Contact>();
+
+            AppUser? appUser = _context.Users
+                               .Include(c => c.Contacts)
+                               .ThenInclude(c => c.Categories)
+                               .FirstOrDefault(u => u.Id == appUserId);
+
+            if (String.IsNullOrEmpty(searchString))
+            {
+                contacts = appUser.Contacts
+                                    .OrderBy(c => c.LastName)
+                                    .ThenBy(c => c.FirstName)
+                                    .ToList();
+
+            }
+            else
+            {
+                contacts = appUser.Contacts.Where(c => c.FullName!.ToLower().Contains(searchString.ToLower()))
+                                   .OrderBy(c => c.LastName)
+                                   .ThenBy(c => c.FirstName)
+                                   .ToList();
+            }
+
+            ViewData["CategoryId"] = new SelectList(appUser.Categories, "Id", "Name", 0);
+
+            return View(nameof(Index), contacts);
+        }
+
+
+
         // GET: Contacts/Details/5
         [Authorize]
         public async Task<IActionResult> Details(int? id)
