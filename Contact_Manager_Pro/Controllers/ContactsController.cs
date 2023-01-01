@@ -14,201 +14,224 @@ using Contact_Manager_Pro.Services.Interfaces;
 
 namespace Contact_Manager_Pro.Controllers
 {
-    [Authorize]
-    public class ContactsController : Controller
-    {
-        private readonly ApplicationDbContext _context;
-        private readonly UserManager<AppUser> _userManager;
-        private readonly IImageService _imageService;
-        private readonly IAddressBookService _addressBookService;
+	[Authorize]
+	public class ContactsController : Controller
+	{
+		private readonly ApplicationDbContext _context;
+		private readonly UserManager<AppUser> _userManager;
+		private readonly IImageService _imageService;
+		private readonly IAddressBookService _addressBookService;
 
-        public ContactsController(ApplicationDbContext context, UserManager<AppUser> userManager, IImageService imageService, IAddressBookService addressBookService)
-        {
-            _context = context;
-            _userManager = userManager;
-            _imageService = imageService;
-            _addressBookService = addressBookService;
-        }
+		public ContactsController(ApplicationDbContext context, UserManager<AppUser> userManager, IImageService imageService, IAddressBookService addressBookService)
+		{
+			_context = context;
+			_userManager = userManager;
+			_imageService = imageService;
+			_addressBookService = addressBookService;
+		}
 
-        // GET: Contacts
-        [Authorize]
-        public async Task<IActionResult> Index()
-        {
-            var applicationDbContext = _context.Contacts.Include(c => c.AppUser);
-            return View(await applicationDbContext.ToListAsync());
-        }
+		// GET: Contacts
+		[Authorize]
+		public async Task<IActionResult> Index()
+		{
 
-        // GET: Contacts/Details/5
-        [Authorize]
-        public async Task<IActionResult> Details(int? id)
-        {
-            if (id == null || _context.Contacts == null)
-            {
-                return NotFound();
-            }
+			// Create an empy list than can hold contacts
+			var contacts = new List<Contact>();
 
-            var contact = await _context.Contacts
-                .Include(c => c.AppUser)
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (contact == null)
-            {
-                return NotFound();
-            }
+			// Get the appUserId of the current logged in user
+			string appUserId = _userManager.GetUserId(User);
 
-            return View(contact);
-        }
+			//return the userId and its associated contacts and categories, Joins the tables of categories and contacts based on the user Id.
+			AppUser? appUser = _context.Users
+				.Include(c => c.Contacts)
+				.ThenInclude(c => c.Categories)
+				.FirstOrDefault(u => u.Id == appUserId);
 
-        // GET: Contacts/Create
-        [Authorize]
-        public async Task<IActionResult> Create()
-        {
-            string appUserId = _userManager.GetUserId(User);
-            ViewData["StatesList"] = new SelectList(Enum.GetValues(typeof(USStates)).Cast<USStates>().ToList());
-            ViewData["CategoryList"] = new MultiSelectList(await _addressBookService.GetUserCategoriesAsync(appUserId), "Id", "Name");
+			// Get the categories from the join table.
+			var categories = appUser.Categories;
 
-            return View();
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,FirstName,LastName,BirthDate,Address,Address2,City,State,ZipCode,Email,PhoneNumber,ImageFile,")] Contact contact, List<int> CategoryList)
-        {
-            // Remove AppUserId from the model state check. This will be useful.
-            ModelState.Remove("AppUserId");
-
-            if (ModelState.IsValid)
-            {
-
-                // Get current logged in user id.
-                contact.AppUserID = _userManager.GetUserId(User);
-
-                // This may be the work around for Postgres
-                contact.Created = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
-
-                if (contact.BirthDate != null)
-                {
-                    // Casting a standard DateTime into a utc datetime. Again Postgres fix.
-                    contact.BirthDate = DateTime.SpecifyKind(contact.BirthDate.Value, DateTimeKind.Utc);
-                }
-                if (contact.ImageFile != null)
-                {
-                    // set the incoming IFormFile to convert to ImageData and save to contact
-                    contact.ImageData = await _imageService.ConvertFileToByteArrayAsync(contact.ImageFile);
-                    // get the incoming IFormFile contenttype and saving it in the image type.
-                    contact.ImageType = contact.ImageFile.ContentType;
-                }
-
-                _context.Add(contact);
-                await _context.SaveChangesAsync();
-
-                // Loop over all the selected categories.
-                foreach (int categoryId in CategoryList)
-                {
-                    //Save each category selected to the contactcategories table.
-                    await _addressBookService.AddContactToCategoryAsync(categoryId, contact.Id);
-                }
-
-                return RedirectToAction(nameof(Index));
-            }
-
-            return RedirectToAction(nameof(Index));
-        }
-
-        // GET: Contacts/Edit/5
-        [Authorize]
-        public async Task<IActionResult> Edit(int? id)
-        {
-            if (id == null || _context.Contacts == null)
-            {
-                return NotFound();
-            }
-
-            var contact = await _context.Contacts.FindAsync(id);
-            if (contact == null)
-            {
-                return NotFound();
-            }
-            ViewData["AppUserID"] = new SelectList(_context.Users, "Id", "Id", contact.AppUserID);
-            return View(contact);
-        }
+			// Get the contacts from the join table and order by lastname then firstname.
+			contacts = appUser.Contacts.OrderBy(c => c.LastName).ThenBy(c => c.FirstName).ToList();
 
 
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,AppUserID,FirstName,LastName,BirthDate,Address,Address2,City,State,ZipCode,Email,PhoneNumber,Created,ImageData,ImageType")] Contact contact)
-        {
-            if (id != contact.Id)
-            {
-                return NotFound();
-            }
+			// Setup the select list for the view.
+			ViewData["CategoryId"] = new SelectList(categories, "Id", "Name");
 
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    _context.Update(contact);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!ContactExists(contact.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
-            }
-            ViewData["AppUserID"] = new SelectList(_context.Users, "Id", "Id", contact.AppUserID);
-            return View(contact);
-        }
+			// return the contacts from the join table.
+			return View(contacts);
+		}
 
-        // GET: Contacts/Delete/5
-        [Authorize]
-        public async Task<IActionResult> Delete(int? id)
-        {
-            if (id == null || _context.Contacts == null)
-            {
-                return NotFound();
-            }
+		// GET: Contacts/Details/5
+		[Authorize]
+		public async Task<IActionResult> Details(int? id)
+		{
+			if (id == null || _context.Contacts == null)
+			{
+				return NotFound();
+			}
 
-            var contact = await _context.Contacts
-                .Include(c => c.AppUser)
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (contact == null)
-            {
-                return NotFound();
-            }
+			var contact = await _context.Contacts
+				.Include(c => c.AppUser)
+				.FirstOrDefaultAsync(m => m.Id == id);
+			if (contact == null)
+			{
+				return NotFound();
+			}
 
-            return View(contact);
-        }
+			return View(contact);
+		}
 
-        // POST: Contacts/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        [Authorize]
-        public async Task<IActionResult> DeleteConfirmed(int id)
-        {
-            if (_context.Contacts == null)
-            {
-                return Problem("Entity set 'ApplicationDbContext.Contacts'  is null.");
-            }
-            var contact = await _context.Contacts.FindAsync(id);
-            if (contact != null)
-            {
-                _context.Contacts.Remove(contact);
-            }
+		// GET: Contacts/Create
+		[Authorize]
+		public async Task<IActionResult> Create()
+		{
+			string appUserId = _userManager.GetUserId(User);
+			ViewData["StatesList"] = new SelectList(Enum.GetValues(typeof(USStates)).Cast<USStates>().ToList());
+			ViewData["CategoryList"] = new MultiSelectList(await _addressBookService.GetUserCategoriesAsync(appUserId), "Id", "Name");
 
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
-        }
+			return View();
+		}
 
-        private bool ContactExists(int id)
-        {
-            return _context.Contacts.Any(e => e.Id == id);
-        }
-    }
+		[HttpPost]
+		[ValidateAntiForgeryToken]
+		public async Task<IActionResult> Create([Bind("Id,FirstName,LastName,BirthDate,Address,Address2,City,State,ZipCode,Email,PhoneNumber,ImageFile,")] Contact contact, List<int> CategoryList)
+		{
+			// Remove AppUserId from the model state check. This will be useful.
+			ModelState.Remove("AppUserId");
+
+			if (ModelState.IsValid)
+			{
+
+				// Get current logged in user id.
+				contact.AppUserID = _userManager.GetUserId(User);
+
+				// This may be the work around for Postgres
+				contact.Created = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
+
+				if (contact.BirthDate != null)
+				{
+					// Casting a standard DateTime into a utc datetime. Again Postgres fix.
+					contact.BirthDate = DateTime.SpecifyKind(contact.BirthDate.Value, DateTimeKind.Utc);
+				}
+				if (contact.ImageFile != null)
+				{
+					// set the incoming IFormFile to convert to ImageData and save to contact
+					contact.ImageData = await _imageService.ConvertFileToByteArrayAsync(contact.ImageFile);
+					// get the incoming IFormFile contenttype and saving it in the image type.
+					contact.ImageType = contact.ImageFile.ContentType;
+				}
+
+				_context.Add(contact);
+				await _context.SaveChangesAsync();
+
+				// Loop over all the selected categories.
+				foreach (int categoryId in CategoryList)
+				{
+					//Save each category selected to the contactcategories table.
+					await _addressBookService.AddContactToCategoryAsync(categoryId, contact.Id);
+				}
+
+				return RedirectToAction(nameof(Index));
+			}
+
+			return RedirectToAction(nameof(Index));
+		}
+
+		// GET: Contacts/Edit/5
+		[Authorize]
+		public async Task<IActionResult> Edit(int? id)
+		{
+			if (id == null || _context.Contacts == null)
+			{
+				return NotFound();
+			}
+
+			var contact = await _context.Contacts.FindAsync(id);
+			if (contact == null)
+			{
+				return NotFound();
+			}
+			ViewData["AppUserID"] = new SelectList(_context.Users, "Id", "Id", contact.AppUserID);
+			return View(contact);
+		}
+
+
+		[HttpPost]
+		[ValidateAntiForgeryToken]
+		public async Task<IActionResult> Edit(int id, [Bind("Id,AppUserID,FirstName,LastName,BirthDate,Address,Address2,City,State,ZipCode,Email,PhoneNumber,Created,ImageData,ImageType")] Contact contact)
+		{
+			if (id != contact.Id)
+			{
+				return NotFound();
+			}
+
+			if (ModelState.IsValid)
+			{
+				try
+				{
+					_context.Update(contact);
+					await _context.SaveChangesAsync();
+				}
+				catch (DbUpdateConcurrencyException)
+				{
+					if (!ContactExists(contact.Id))
+					{
+						return NotFound();
+					}
+					else
+					{
+						throw;
+					}
+				}
+				return RedirectToAction(nameof(Index));
+			}
+			ViewData["AppUserID"] = new SelectList(_context.Users, "Id", "Id", contact.AppUserID);
+			return View(contact);
+		}
+
+		// GET: Contacts/Delete/5
+		[Authorize]
+		public async Task<IActionResult> Delete(int? id)
+		{
+			if (id == null || _context.Contacts == null)
+			{
+				return NotFound();
+			}
+
+			var contact = await _context.Contacts
+				.Include(c => c.AppUser)
+				.FirstOrDefaultAsync(m => m.Id == id);
+			if (contact == null)
+			{
+				return NotFound();
+			}
+
+			return View(contact);
+		}
+
+		// POST: Contacts/Delete/5
+		[HttpPost, ActionName("Delete")]
+		[ValidateAntiForgeryToken]
+		[Authorize]
+		public async Task<IActionResult> DeleteConfirmed(int id)
+		{
+			if (_context.Contacts == null)
+			{
+				return Problem("Entity set 'ApplicationDbContext.Contacts'  is null.");
+			}
+			var contact = await _context.Contacts.FindAsync(id);
+			if (contact != null)
+			{
+				_context.Contacts.Remove(contact);
+			}
+
+			await _context.SaveChangesAsync();
+			return RedirectToAction(nameof(Index));
+		}
+
+		private bool ContactExists(int id)
+		{
+			return _context.Contacts.Any(e => e.Id == id);
+		}
+	}
 }

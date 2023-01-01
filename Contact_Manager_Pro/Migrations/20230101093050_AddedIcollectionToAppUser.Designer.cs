@@ -3,6 +3,7 @@ using System;
 using Contact_Manager_Pro.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,10 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Contact_Manager_Pro.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20230101093050_AddedIcollectionToAppUser")]
+    partial class AddedIcollectionToAppUser
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -354,7 +356,7 @@ namespace Contact_Manager_Pro.Migrations
             modelBuilder.Entity("Contact_Manager_Pro.Models.Category", b =>
                 {
                     b.HasOne("Contact_Manager_Pro.Models.AppUser", "AppUser")
-                        .WithMany("Categories")
+                        .WithMany()
                         .HasForeignKey("AppUserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -426,8 +428,6 @@ namespace Contact_Manager_Pro.Migrations
 
             modelBuilder.Entity("Contact_Manager_Pro.Models.AppUser", b =>
                 {
-                    b.Navigation("Categories");
-
                     b.Navigation("Contacts");
                 });
 #pragma warning restore 612, 618
