@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Authorization;
 using Contact_Manager_Pro.Enums;
 using Contact_Manager_Pro.Models.ViewModels;
 using Contact_Manager_Pro.Services.Interfaces;
+using Microsoft.AspNetCore.Identity.UI.Services;
 
 namespace Contact_Manager_Pro.Controllers
 {
@@ -22,20 +23,22 @@ namespace Contact_Manager_Pro.Controllers
         private readonly UserManager<AppUser> _userManager;
         private readonly IImageService _imageService;
         private readonly IAddressBookService _addressBookService;
+        private readonly IEmailSender _emailService;
 
-        public ContactsController(ApplicationDbContext context, UserManager<AppUser> userManager, IImageService imageService, IAddressBookService addressBookService)
+        public ContactsController(ApplicationDbContext context, UserManager<AppUser> userManager, IImageService imageService, IAddressBookService addressBookService, IEmailSender emailService)
         {
             _context = context;
             _userManager = userManager;
             _imageService = imageService;
             _addressBookService = addressBookService;
+            _emailService = emailService;
         }
 
         // GET: Contacts
         [Authorize]
-        public IActionResult Index(int categoryId)
+        public IActionResult Index(int categoryId, string swalMessage = null)
         {
-
+            ViewData["SwalMessage"] = swalMessage;
 
             // Create an empy list than can hold contacts
             var contacts = new List<Contact>();
@@ -134,6 +137,31 @@ namespace Contact_Manager_Pro.Controllers
 
             return View(model);
         }
+
+        [HttpPost]
+        [Authorize]
+        public async Task<IActionResult> EmailContact(EmailContactViewModel ecvm)
+        {
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    await _emailService.SendEmailAsync(ecvm.EmailData!.EmailAddress, ecvm.EmailData.Subject,
+                        ecvm.EmailData.Body);
+
+                    return RedirectToAction("Index", "Contacts", new { swalMessage = "Success: Email Sent!" });
+                }
+                catch (Exception e)
+                {
+                    return RedirectToAction("Index", "Contacts", new { swalMessage = "Error: Email Send Failed!" });
+                    Console.WriteLine(e.Message);
+                    throw;
+                }
+            }
+
+            return View();
+        }
+
 
         // GET: Contacts/Details/5
         [Authorize]
