@@ -43,7 +43,7 @@ namespace Contact_Manager_Pro.Services
             {
                 Contact? contact = await _context.Contacts.Include(c => c.Categories)
                     .FirstOrDefaultAsync(c => c.Id == contactId);
-                return contact.Categories;
+                return contact!.Categories;
             }
             catch (Exception)
             {
@@ -58,7 +58,7 @@ namespace Contact_Manager_Pro.Services
                 var contact = await _context.Contacts.Include(c => c.Categories)
                     .FirstOrDefaultAsync(c => c.Id == contactId);
 
-                List<int> categoryIds = contact.Categories.Select(c => c.Id).ToList();
+                List<int> categoryIds = contact!.Categories.Select(c => c.Id).ToList();
                 return categoryIds;
             }
             catch (Exception)
@@ -89,7 +89,7 @@ namespace Contact_Manager_Pro.Services
             Contact? contact = await _context.Contacts.FindAsync(contactId);
             return await _context.Categories
                                 .Include(c => c.Contacts)
-                                .Where(c => c.Id == categoryId && c.Contacts.Contains(contact))
+                                .Where(c => c.Id == categoryId && c.Contacts.Contains(contact!))
                                 .AnyAsync();
         }
 
