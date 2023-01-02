@@ -69,7 +69,7 @@ namespace Contact_Manager_Pro.Models
 
 
         // Virtual
-        public virtual AppUser? AppUser { get; set; }
+        public virtual AppUser AppUser { get; set; }
 
         public virtual ICollection<Category> Categories { get; set; } = new HashSet<Category>();
 

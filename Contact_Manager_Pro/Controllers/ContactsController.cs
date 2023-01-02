@@ -192,12 +192,19 @@ namespace Contact_Manager_Pro.Controllers
                 return NotFound();
             }
 
-            var contact = await _context.Contacts.FindAsync(id);
+            // Checks to make sure you are requesting a contact that belongs to the current logged in user.
+            string appUserId = _userManager.GetUserId(User);
+            var contact = await _context.Contacts.Where(c => c.Id == id && c.AppUserId == appUserId)
+                                                .FirstOrDefaultAsync();
+
             if (contact == null)
             {
                 return NotFound();
             }
-            ViewData["AppUserID"] = new SelectList(_context.Users, "Id", "Id", contact.AppUserId);
+
+            ViewData["StatesList"] = new SelectList(Enum.GetValues(typeof(USStates)).Cast<USStates>().ToList());
+            ViewData["CategoryList"] = new MultiSelectList(await _addressBookService.GetUserCategoriesAsync(appUserId), "Id", "Name");
+
             return View(contact);
         }
 
