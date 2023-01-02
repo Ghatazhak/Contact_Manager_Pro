@@ -10,6 +10,7 @@ using Contact_Manager_Pro.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Contact_Manager_Pro.Enums;
+using Contact_Manager_Pro.Models.ViewModels;
 using Contact_Manager_Pro.Services.Interfaces;
 
 namespace Contact_Manager_Pro.Controllers
@@ -105,7 +106,34 @@ namespace Contact_Manager_Pro.Controllers
             return View(nameof(Index), contacts);
         }
 
+        [Authorize]
+        public async Task<IActionResult> EmailContact(int id)
+        {
+            string appUserId = _userManager.GetUserId(User);
+            Contact? contact = await _context.Contacts.Where(c => c.Id == id && c.AppUserId == appUserId)
+                .FirstOrDefaultAsync();
 
+            if (contact == null)
+            {
+                return NotFound();
+            }
+
+            EmailData emailData = new EmailData()
+            {
+                EmailAddress = contact.Email!,
+                FirstName = contact.FirstName,
+                LastName = contact.LastName,
+            };
+
+            EmailContactViewModel model = new EmailContactViewModel()
+            {
+                EmailData = emailData,
+                Contact = contact
+
+            };
+
+            return View(model);
+        }
 
         // GET: Contacts/Details/5
         [Authorize]
