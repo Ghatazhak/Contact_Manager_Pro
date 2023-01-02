@@ -11,7 +11,7 @@ namespace Contact_Manager_Pro.Models
         public int Id { get; set; }
 
         [Required]
-        public string? AppUserID { get; set; }
+        public string? AppUserId { get; set; }
 
         [Required]
         [Display(Name = "First Name")]
@@ -24,13 +24,7 @@ namespace Contact_Manager_Pro.Models
         public string? LastName { get; set; }
 
         [NotMapped]
-        public string? FullName
-        {
-            get
-            {
-                return $"{FirstName} {LastName}";
-            }
-        }
+        public string? FullName => $"{FirstName} {LastName}";
 
         [Display(Name = "Birthday")]
         [DataType(DataType.Date)]

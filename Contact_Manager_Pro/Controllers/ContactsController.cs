@@ -149,7 +149,7 @@ namespace Contact_Manager_Pro.Controllers
             {
 
                 // Get current logged in user id.
-                contact.AppUserID = _userManager.GetUserId(User);
+                contact.AppUserId = _userManager.GetUserId(User);
 
                 // This may be the work around for Postgres
                 contact.Created = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
@@ -197,7 +197,7 @@ namespace Contact_Manager_Pro.Controllers
             {
                 return NotFound();
             }
-            ViewData["AppUserID"] = new SelectList(_context.Users, "Id", "Id", contact.AppUserID);
+            ViewData["AppUserID"] = new SelectList(_context.Users, "Id", "Id", contact.AppUserId);
             return View(contact);
         }
 
@@ -231,7 +231,7 @@ namespace Contact_Manager_Pro.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["AppUserID"] = new SelectList(_context.Users, "Id", "Id", contact.AppUserID);
+            ViewData["AppUserID"] = new SelectList(_context.Users, "Id", "Id", contact.AppUserId);
             return View(contact);
         }
 
