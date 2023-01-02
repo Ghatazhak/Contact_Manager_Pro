@@ -203,8 +203,7 @@ namespace Contact_Manager_Pro.Controllers
             }
 
             ViewData["StatesList"] = new SelectList(Enum.GetValues(typeof(USStates)).Cast<USStates>().ToList());
-            ViewData["CategoryList"] = new MultiSelectList(await _addressBookService.GetUserCategoriesAsync(appUserId), "Id", "Name");
-
+            ViewData["CategoryList"] = new MultiSelectList(await _addressBookService.GetUserCategoriesAsync(appUserId), "Id", "Name", await _addressBookService.GetContactCategoryIdsAsync(contact.Id));
             return View(contact);
         }
 
