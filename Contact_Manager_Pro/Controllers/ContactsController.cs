@@ -210,8 +210,10 @@ namespace Contact_Manager_Pro.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,AppUserID,FirstName,LastName,BirthDate,Address,Address2,City,State,ZipCode,Email,PhoneNumber,Created,ImageData,ImageType")] Contact contact)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,AppUserId,FirstName,LastName,BirthDate,Address,Address2,City,State,ZipCode,Email,PhoneNumber,Created,ImageData,ImageType, Categories")] Contact contact)
         {
+
+
             if (id != contact.Id)
             {
                 return NotFound();
@@ -221,6 +223,15 @@ namespace Contact_Manager_Pro.Controllers
             {
                 try
                 {
+                    // Postgres datetime fix
+                    contact.Created = DateTime.SpecifyKind(contact.Created, DateTimeKind.Utc);
+
+                    if (contact.BirthDate != null)
+                    {
+                        // Postgres datetime fix had to all Value on this because it was coming from the form.
+                        contact.BirthDate = DateTime.SpecifyKind(contact.BirthDate.Value, DateTimeKind.Utc);
+                    }
+
                     _context.Update(contact);
                     await _context.SaveChangesAsync();
                 }
