@@ -49,7 +49,7 @@ namespace Contact_Manager_Pro.Controllers
                 .FirstOrDefault(u => u.Id == appUserId);
 
             // Get the categories from the join table.
-            var categories = appUser.Categories;
+            var categories = appUser!.Categories;
 
             if (categoryId == 0)
             {
@@ -59,7 +59,7 @@ namespace Contact_Manager_Pro.Controllers
             }
             else
             {
-                contacts = appUser.Categories.FirstOrDefault(c => c.Id == categoryId)
+                contacts = appUser.Categories.FirstOrDefault(c => c.Id == categoryId)!
                                   .Contacts
                                   .OrderBy(c => c.LastName)
                                   .ThenBy(c => c.FirstName)
@@ -77,12 +77,12 @@ namespace Contact_Manager_Pro.Controllers
         public IActionResult SearchContacts(string searchString)
         {
             string appUserId = _userManager.GetUserId(User);
-            var contacts = new List<Contact>();
+            List<Contact> contacts = new List<Contact>();
 
-            AppUser? appUser = _context.Users
-                               .Include(c => c.Contacts)
-                               .ThenInclude(c => c.Categories)
-                               .FirstOrDefault(u => u.Id == appUserId);
+            AppUser appUser = _context.Users
+                .Include(c => c.Contacts)
+                .ThenInclude(c => c.Categories)
+                .FirstOrDefault(u => u.Id == appUserId)!;
 
             if (String.IsNullOrEmpty(searchString))
             {
@@ -210,7 +210,7 @@ namespace Contact_Manager_Pro.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,AppUserId,FirstName,LastName,BirthDate,Address,Address2,City,State,ZipCode,Email,PhoneNumber,Created,ImageData,ImageType,ImageFile, Categories")] Contact contact)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,AppUserId,FirstName,LastName,BirthDate,Address,Address2,City,State,ZipCode,Email,PhoneNumber,Created,ImageData,ImageType,ImageFile, Categories")] Contact contact, List<int> CategoryList)
         {
 
 
@@ -241,6 +241,22 @@ namespace Contact_Manager_Pro.Controllers
 
                     _context.Update(contact);
                     await _context.SaveChangesAsync();
+
+                    // Had to add extra parens to allow ToList(); to function not sure why
+                    // Remove current categories
+                    List<Category> oldCategories =
+                        (await _addressBookService.GetContactCategoriesAsync(contact.Id)).ToList();
+                    foreach (var category in oldCategories)
+                    {
+                        await _addressBookService.RemoveContactFromCategoryAsync(category.Id, contact.Id);
+                    }
+
+                    // Add the currently selected categories
+                    foreach (var categoryId in CategoryList)
+                    {
+                        await _addressBookService.AddContactToCategoryAsync(categoryId, contact.Id);
+                    }
+
                 }
                 catch (DbUpdateConcurrencyException)
                 {
