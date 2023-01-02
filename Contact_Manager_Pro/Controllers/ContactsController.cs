@@ -210,7 +210,7 @@ namespace Contact_Manager_Pro.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,AppUserId,FirstName,LastName,BirthDate,Address,Address2,City,State,ZipCode,Email,PhoneNumber,Created,ImageData,ImageType, Categories")] Contact contact)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,AppUserId,FirstName,LastName,BirthDate,Address,Address2,City,State,ZipCode,Email,PhoneNumber,Created,ImageData,ImageType,ImageFile, Categories")] Contact contact)
         {
 
 
@@ -232,6 +232,13 @@ namespace Contact_Manager_Pro.Controllers
                         contact.BirthDate = DateTime.SpecifyKind(contact.BirthDate.Value, DateTimeKind.Utc);
                     }
 
+                    if (contact.ImageFile != null)
+                    {
+                        contact.ImageData = await _imageService.ConvertFileToByteArrayAsync(contact.ImageFile);
+                        contact.ImageType = contact.ImageFile.ContentType;
+                    }
+
+
                     _context.Update(contact);
                     await _context.SaveChangesAsync();
                 }
@@ -248,7 +255,7 @@ namespace Contact_Manager_Pro.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["AppUserID"] = new SelectList(_context.Users, "Id", "Id", contact.AppUserId);
+            ViewData["AppUserId"] = new SelectList(_context.Users, "Id", "Id", contact.AppUserId);
             return View(contact);
         }
 
