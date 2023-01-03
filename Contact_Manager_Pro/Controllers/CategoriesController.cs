@@ -64,24 +64,24 @@ namespace Contact_Manager_Pro.Controllers
         [Authorize]
         public IActionResult Create()
         {
-            ViewData["AppUserId"] = new SelectList(_context.Users, "Id", "Id");
             return View();
         }
 
         // POST: Categories/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Id,AppUserId,Name")] Category category)
         {
+            ModelState.Remove("AppUserId");
             if (ModelState.IsValid)
             {
+                string appUserId = _userManager.GetUserId(User);
+
                 _context.Add(category);
+                category.AppUserId = appUserId;
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["AppUserId"] = new SelectList(_context.Users, "Id", "Id", category.AppUserId);
             return View(category);
         }
 
