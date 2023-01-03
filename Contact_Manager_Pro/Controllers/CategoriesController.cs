@@ -15,6 +15,7 @@ using Contact_Manager_Pro.Models.ViewModels;
 
 namespace Contact_Manager_Pro.Controllers
 {
+    [Authorize]
     public class CategoriesController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -32,11 +33,9 @@ namespace Contact_Manager_Pro.Controllers
         {
             string appUserId = _userManager.GetUserId(User);
 
-
             var categories = await _context.Categories.Where(c => c.AppUserId == appUserId)
                 .Include(c => c.AppUser)
                 .ToListAsync();
-
 
             return View(categories);
         }
@@ -90,23 +89,25 @@ namespace Contact_Manager_Pro.Controllers
         [Authorize]
         public async Task<IActionResult> Edit(int? id)
         {
-            if (id == null || _context.Categories == null)
+            if (id == null)
             {
                 return NotFound();
             }
 
-            var category = await _context.Categories.FindAsync(id);
+            string appUserId = _userManager.GetUserId(User);
+
+            var category = await _context.Categories.Where(c => c.Id == id && c.AppUserId == appUserId).FirstOrDefaultAsync();
+
             if (category == null)
             {
                 return NotFound();
             }
+
             ViewData["AppUserId"] = new SelectList(_context.Users, "Id", "Id", category.AppUserId);
             return View(category);
         }
 
         // POST: Categories/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("Id,AppUserId,Name")] Category category)
@@ -120,6 +121,10 @@ namespace Contact_Manager_Pro.Controllers
             {
                 try
                 {
+                    string appUserId = _userManager.GetUserId(User);
+
+                    category.AppUserId = appUserId;
+
                     _context.Update(category);
                     await _context.SaveChangesAsync();
                 }
