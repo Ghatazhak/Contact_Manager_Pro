@@ -17,7 +17,7 @@ namespace Contact_Manager_Pro.Helpers
         {
             var dataBaseUri = new Uri(databaseUrl);
             var userInfo = dataBaseUri.UserInfo.Split(':');
-            var builder = new NpgsqlConnectionStringBuilder()
+            var builder = new NpgsqlConnectionStringBuilder
             {
                 Host = dataBaseUri.Host,
                 Port = dataBaseUri.Port,
