@@ -50,6 +50,12 @@ else
     app.UseHsts();
 }
 
+
+//Custom error page
+app.UseStatusCodePagesWithReExecute("/Home/HandleError/{0}");
+
+
+
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 
