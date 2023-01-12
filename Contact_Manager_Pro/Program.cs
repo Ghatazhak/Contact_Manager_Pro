@@ -1,4 +1,5 @@
 using Contact_Manager_Pro.Data;
+using Contact_Manager_Pro.Helpers;
 using Contact_Manager_Pro.Models;
 using Contact_Manager_Pro.Services;
 using Contact_Manager_Pro.Services.Interfaces;
@@ -11,7 +12,9 @@ var builder = WebApplication.CreateBuilder(args);
 // var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
 // This var gets our connection string from a managed secret instead of using appsettings.json. This keeps from pushing our secrets to github.
-var connectionString = builder.Configuration.GetSection("pgSettings")["pgConnection"];
+//var connectionString = builder.Configuration.GetSection("pgSettings")["pgConnection"];
+
+var connectionString = ConnectionHelper.GetConnectionString(builder.Configuration);
 
 // Original db context for  microsoft sql server.
 //builder.Services.AddDbContext<ApplicationDbContext>(options =>
