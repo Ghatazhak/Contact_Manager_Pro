@@ -181,7 +181,7 @@ namespace Contact_Manager_Pro.Areas.Identity.Pages.Account.Manage
             return string.Format(
                 CultureInfo.InvariantCulture,
                 AuthenticatorUriFormat,
-                _urlEncoder.Encode("Microsoft.AspNetCore.Identity.UI"),
+                _urlEncoder.Encode("CM Pro"),
                 _urlEncoder.Encode(email),
                 unformattedKey);
         }
